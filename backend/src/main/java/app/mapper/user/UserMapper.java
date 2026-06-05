@@ -2,6 +2,7 @@ package app.mapper.user;
 
 import app.model.dto.user.RegisterRequest;
 import app.model.dto.user.UserDto;
+import app.model.dto.user.UserResponse;
 import app.model.entity.user.User;
 
 import java.time.LocalDateTime;
@@ -32,5 +33,17 @@ public class UserMapper {
                 .firstName(user.getFirstName())
                 .username(user.getUsername())
                 .build();
+    }
+
+    public static UserResponse toUserResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getProfilePictureUrl(),
+                user.getCreatedOn()
+        );
     }
 }

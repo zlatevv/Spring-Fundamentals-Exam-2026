@@ -5,7 +5,10 @@ import app.model.entity.user.User;
 import app.model.enums.workoutsession.MuscleGroup;
 import app.model.enums.workoutsession.SessionStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,6 +18,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "workout_sessions")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class WorkoutSession {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
