@@ -21,11 +21,15 @@ export default function AuthPage() {
     setError(null);
     try {
       if (tab === "login") {
-        const res = await axios.post("/api/auth/login", {
-          username: formData.username,
-          password: formData.password,
+        const params = new URLSearchParams();
+        params.append("username", formData.username);
+        params.append("password", formData.password);
+
+        const res = await axios.post("/api/auth/login", params, {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          withCredentials: true,
         });
-        login(res.data); // { id, username, email }
+        login(res.data);
         navigate("/");
       } else {
         const res = await axios.post("/api/auth/register", {

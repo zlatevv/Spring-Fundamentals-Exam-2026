@@ -4,6 +4,7 @@ import app.model.entity.user.SessionParticipant;
 import app.model.entity.user.User;
 import app.model.enums.workoutsession.MuscleGroup;
 import app.model.enums.workoutsession.SessionStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,7 +53,8 @@ public class WorkoutSession {
     @JoinColumn(name = "host_id")
     private User host;
 
-    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<SessionParticipant> participants = new ArrayList<>();
 
     private LocalDateTime createdOn;

@@ -7,5 +7,6 @@ public enum MuscleGroup {
     BACK,
     BICEPS,
     TRICEPS,
-    SHOULDERS
+    SHOULDERS,
+    FULL_BODY
 }

@@ -17,6 +17,7 @@ public class UserMapper {
         return User.builder()
                 .username(registerRequest.getUsername())
                 .password(registerRequest.getPassword())
+                .email(registerRequest.getEmail())
                 .isActive(true)
                 .createdOn(LocalDateTime.now())
                 .updatedOn(LocalDateTime.now())

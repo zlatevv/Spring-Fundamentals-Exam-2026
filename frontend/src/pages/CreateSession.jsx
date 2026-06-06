@@ -54,8 +54,10 @@ export default function CreateSession() {
       await axios.post("/api/sessions", {
         ...form,
         maxPartners: Number(form.maxPartners),
-        hostId: user.id,
-      });
+        host: { id: user.id },
+      }, {
+          withCredentials: true
+          });
       setSubmitted(true);
     } catch (err) {
       // server-side validation errors come back as { field: message }
