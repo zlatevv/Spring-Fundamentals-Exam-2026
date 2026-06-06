@@ -1,29 +1,73 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GLOBAL_STYLES, inputStyle, labelStyle } from "./shared";
-
-const ALL_TAGS = ["Legs", "Squat", "Back", "Chest", "Arms", "Shoulders", "Full Body", "Push", "Pull", "Cardio"];
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import Navbar from "../components/Navbar";
+import { GLOBAL_STYLES, MUSCLE_GROUPS, inputStyle, labelStyle } from "../shared/shared";
 
 export default function CreateSession() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const [title, setTitle]             = useState("Heavy Squat Session");
-  const [city, setCity]               = useState("Los Angeles");
-  const [gym, setGym]                 = useState("The Barbell Club");
-  const [date, setDate]               = useState("2024-10-29T18:00");
-  const [maxPartners, setMaxPartners] = useState(2);
-  const [tags, setTags]               = useState(["Legs", "Squat", "Back"]);
-  const [desc, setDesc]               = useState(
-    "Looking for a spotter for heavy squats. Going for 5x5 at 315lbs. Casual lifting atmosphere."
-  );
+  const [form, setForm] = useState({
+    title: "",
+    cityName: "",
+    gymName: "",
+    scheduledAt: "",
+    maxPartners: 2,
+    muscleGroup: MUSCLE_GROUPS[0],
+    description: "",
+  });
+  const [errors, setErrors]     = useState({});
+  const [loading, setLoading]   = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const toggleTag = t =>
-    setTags(prev => (prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+    setErrors(prev => ({ ...prev, [name]: null }));
+  };
 
-  const handlePost = () => {
-    setSubmitted(true);
-    setTimeout(() => navigate("/"), 1800);
+  const validate = () => {
+    const e = {};
+    if (!form.title.trim())       e.title       = "Title is required.";
+    if (!form.cityName.trim())    e.cityName    = "City is required.";
+    if (!form.gymName.trim())     e.gymName     = "Gym name is required.";
+    if (!form.scheduledAt)        e.scheduledAt = "Date and time are required.";
+    if (!form.muscleGroup)        e.muscleGroup = "Muscle group is required.";
+    if (form.maxPartners < 1 || form.maxPartners > 10)
+                                  e.maxPartners = "Must be between 1 and 10.";
+    return e;
+  };
+
+  const handleSubmit = async () => {
+    if (!user) { navigate("/auth"); return; }
+
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.post("/api/sessions", {
+        ...form,
+        maxPartners: Number(form.maxPartners),
+        hostId: user.id,
+      });
+      setSubmitted(true);
+    } catch (err) {
+      // server-side validation errors come back as { field: message }
+      const data = err.response?.data;
+      if (typeof data === "object") {
+        setErrors(data);
+      } else {
+        setErrors({ general: data || "Something went wrong." });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -71,111 +115,96 @@ export default function CreateSession() {
           Create Workout Session
         </h1>
 
+        {errors.general && (
+          <div style={{ background: "#3d1a1a", border: "1px solid #6b2d2d", color: "#e07070", borderRadius: 10, padding: "12px 16px", marginBottom: 24, fontSize: 14 }}>
+            ⚠️ {errors.general}
+          </div>
+        )}
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px 32px" }}>
 
-          <div>
-            <label style={labelStyle}>Session Title</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} placeholder="e.g. Heavy Chest Day" />
-          </div>
+          <Field label="Session Title" error={errors.title}>
+            <input name="title" value={form.title} onChange={handleChange}
+              style={fieldInput(errors.title)} placeholder="e.g. Heavy Chest Day" />
+          </Field>
 
-          <div>
-            <label style={labelStyle}>City</label>
+          <Field label="City" error={errors.cityName}>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", fontSize: 16, pointerEvents: "none" }}>📍</span>
-              <input value={city} onChange={e => setCity(e.target.value)} style={{ ...inputStyle, paddingLeft: 36 }} placeholder="Los Angeles" />
+              <span style={iconStyle}>📍</span>
+              <input name="cityName" value={form.cityName} onChange={handleChange}
+                style={{ ...fieldInput(errors.cityName), paddingLeft: 36 }} placeholder="Los Angeles" />
             </div>
-          </div>
+          </Field>
 
-          <div>
-            <label style={labelStyle}>Gym Name</label>
-            <input value={gym} onChange={e => setGym(e.target.value)} style={inputStyle} placeholder="e.g. Powerhouse Gym" />
-          </div>
+          <Field label="Gym Name" error={errors.gymName}>
+            <input name="gymName" value={form.gymName} onChange={handleChange}
+              style={fieldInput(errors.gymName)} placeholder="e.g. Powerhouse Gym" />
+          </Field>
 
-          <div>
-            <label style={labelStyle}>Muscle Group</label>
-            <div style={{
-              ...inputStyle, display: "flex", flexWrap: "wrap", gap: 8,
-              minHeight: 50, alignItems: "center", padding: "8px 12px", cursor: "default",
-            }}>
-              {ALL_TAGS.map(t => {
-                const active = tags.includes(t);
-                return (
-                  <span key={t} onClick={() => toggleTag(t)} style={{
-                    background: active ? "#1c3d1c" : "#252525",
-                    color: active ? "#7cc47c" : "#555",
-                    border: `1px solid ${active ? "#2d6b2d" : "#333"}`,
-                    borderRadius: 20, fontSize: 12, padding: "3px 10px",
-                    cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-                    transition: "all 0.15s",
-                  }}>
-                    {t}
-                    {active && <span style={{ opacity: 0.65, fontSize: 11 }}>×</span>}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
+          <Field label="Muscle Group" error={errors.muscleGroup}>
+            <select name="muscleGroup" value={form.muscleGroup} onChange={handleChange}
+              style={fieldInput(errors.muscleGroup)}>
+              {MUSCLE_GROUPS.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </Field>
 
-          <div>
-            <label style={labelStyle}>Date & Time Picker</label>
+          <Field label="Date & Time" error={errors.scheduledAt}>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", fontSize: 15, pointerEvents: "none" }}>📅</span>
-              <input type="datetime-local" value={date} onChange={e => setDate(e.target.value)}
-                style={{ ...inputStyle, paddingLeft: 36, colorScheme: "dark" }} />
+              <span style={iconStyle}>📅</span>
+              <input type="datetime-local" name="scheduledAt" value={form.scheduledAt}
+                onChange={handleChange}
+                style={{ ...fieldInput(errors.scheduledAt), paddingLeft: 36, colorScheme: "dark" }} />
             </div>
+          </Field>
+
+          <Field label="Max Partners" error={errors.maxPartners}>
+            <input type="number" name="maxPartners" min={1} max={10} value={form.maxPartners}
+              onChange={handleChange} style={fieldInput(errors.maxPartners)} />
+          </Field>
+
+          <div style={{ gridColumn: "1 / -1" }}>
+            <Field label="Description" error={errors.description}>
+              <textarea name="description" value={form.description} onChange={handleChange}
+                rows={5} placeholder="Describe your session, goals, experience level expected…"
+                style={{ ...fieldInput(errors.description), resize: "vertical", lineHeight: 1.65, paddingTop: 12, paddingBottom: 12 }} />
+            </Field>
           </div>
 
-          <div style={{ gridRow: "span 2" }}>
-            <label style={labelStyle}>Description</label>
-            <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={7}
-              placeholder="Describe your session, goals, experience level expected…"
-              style={{ ...inputStyle, resize: "vertical", height: "auto", lineHeight: 1.65, paddingTop: 12, paddingBottom: 12 }} />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Max Partners</label>
-            <input type="number" min={1} max={10} step={1} value={maxPartners}
-              onChange={e => setMaxPartners(Number(e.target.value))} style={inputStyle} />
-          </div>
         </div>
 
         <button
-          onClick={handlePost}
-          style={{ ...primaryBtn, width: "100%", marginTop: 32, fontSize: 17, padding: "16px 0" }}
-          onMouseEnter={e => e.currentTarget.style.background = "#1d4ed8"}
-          onMouseLeave={e => e.currentTarget.style.background = "#2563eb"}
+          onClick={handleSubmit}
+          disabled={loading}
+          style={{ ...primaryBtn, width: "100%", marginTop: 32, fontSize: 17, padding: "16px 0", opacity: loading ? 0.7 : 1 }}
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "#1d4ed8"; }}
+          onMouseLeave={e => { if (!loading) e.currentTarget.style.background = "#2563eb"; }}
         >
-          Post Session
+          {loading ? "Posting..." : "Post Session"}
         </button>
       </div>
     </div>
   );
 }
 
-function Navbar() {
-  const navigate = useNavigate();
+function Field({ label, error, children }) {
   return (
-    <nav style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 32px", height: 60, background: "#0a0a0a",
-      borderBottom: "1px solid #1a1a1a",
-    }}>
-      <span onClick={() => navigate("/")} style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 26, fontWeight: 800, cursor: "pointer" }}>
-        <span style={{ color: "#2563eb" }}>Spot</span>
-        <span style={{ color: "#f97316" }}>Me</span>
-      </span>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => navigate("/")} style={navBtn}>Find Spotter</button>
-        <button onClick={() => navigate("/profile")} style={navBtn}>My Profile</button>
-      </div>
-      <div style={{ display: "flex", gap: 10 }}>
-        <button style={{ background: "none", border: "none", color: "#ccc", fontSize: 14, cursor: "pointer", padding: "6px 14px" }}>Log in</button>
-        <button style={{ background: "#f97316", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", borderRadius: 8, padding: "8px 18px" }}>Sign up</button>
-      </div>
-    </nav>
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
+      {error && <p style={{ margin: "6px 0 0", fontSize: 12, color: "#e07070" }}>⚠️ {error}</p>}
+    </div>
   );
 }
 
-const pageWrap = { minHeight: "100vh", background: "#111", fontFamily: "'DM Sans', sans-serif", color: "#e0e0e0" };
+const fieldInput = (error) => ({
+  ...inputStyle,
+  borderColor: error ? "#6b2d2d" : "#2a2a2a",
+});
+
+const iconStyle = {
+  position: "absolute", left: 13, top: "50%",
+  transform: "translateY(-50%)", fontSize: 15, pointerEvents: "none",
+};
+
+const pageWrap  = { minHeight: "100vh", background: "#111", fontFamily: "'DM Sans', sans-serif", color: "#e0e0e0" };
 const primaryBtn = { background: "#2563eb", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", borderRadius: 12, padding: "12px 32px", transition: "background 0.15s" };
-const navBtn = { background: "none", border: "1px solid #2a2a2a", color: "#999", borderRadius: 8, padding: "6px 14px", fontSize: 14, cursor: "pointer", transition: "all 0.15s", fontFamily: "'DM Sans', sans-serif" };
