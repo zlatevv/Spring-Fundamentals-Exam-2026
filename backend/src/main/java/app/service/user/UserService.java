@@ -60,7 +60,7 @@ public class UserService {
         return UserMapper.toUserDto(loggedUser);
     }
 
-    public void editProfile(UUID userId, EditProfileRequest request) {
+    public UserDto editProfile(UUID userId, EditProfileRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserDoesNotExistException("User not found!"));
 
@@ -82,6 +82,8 @@ public class UserService {
         }
 
         userRepository.save(user);
+
+        return UserMapper.toUserDto(user);
     }
 
     public UserResponse getProfile(UUID userId) {

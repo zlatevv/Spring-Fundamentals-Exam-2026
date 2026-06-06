@@ -4,9 +4,11 @@ import app.model.dto.user.RegisterRequest;
 import app.model.dto.user.UserDto;
 import app.model.dto.user.UserResponse;
 import app.model.entity.user.User;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+@Component
 public class UserMapper {
     public static User toUserEntity(RegisterRequest registerRequest) {
         if  (registerRequest == null) {

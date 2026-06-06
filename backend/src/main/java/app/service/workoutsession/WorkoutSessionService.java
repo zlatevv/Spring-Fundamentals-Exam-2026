@@ -4,8 +4,10 @@ import app.exception.user.UserDoesNotExistException;
 import app.exception.workoutsession.AlreadyJoinedException;
 import app.exception.workoutsession.SessionFullException;
 import app.exception.workoutsession.UnauthorizedActionException;
+import app.exception.workoutsession.UserNotInSessionException;
 import app.mapper.workoutsession.WorkoutSessionMapper;
 import app.model.dto.workoutsession.CreateSessionRequest;
+import app.model.dto.workoutsession.WorkoutSessionDto;
 import app.model.entity.user.SessionParticipant;
 import app.model.entity.user.User;
 import app.model.entity.workoutsession.WorkoutSession;
@@ -14,9 +16,11 @@ import app.repository.user.SessionParticipantRepository;
 import app.repository.user.UserRepository;
 import app.repository.workoutsession.WorkoutSessionRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,10 +35,15 @@ public class WorkoutSessionService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public void createWorkoutSession(CreateSessionRequest createSessionRequest) {
-        workoutSessionRepository.save(WorkoutSessionMapper.toWorkoutSessionEntity(createSessionRequest));
+        User host = userRepository.findById(createSessionRequest.getHost().getId())
+                .orElseThrow(() -> new UserDoesNotExistException("User doesn't exist"));
+
+        workoutSessionRepository.save(WorkoutSessionMapper.toEntity(createSessionRequest, host));
     }
 
+    @Transactional
     public void joinSession(UUID sessionId, UUID partnerId) {
         WorkoutSession session = workoutSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session not found!"));
@@ -68,5 +77,55 @@ public class WorkoutSessionService {
         participant.setJoinedAt(LocalDateTime.now());
 
         sessionParticipantRepository.save(participant);
+    }
+
+    @Transactional
+    public void leaveSession(UUID sessionId, UUID partnerId) {
+        WorkoutSession session = workoutSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("Session not found!"));
+
+        SessionParticipant participant = session.getParticipants().stream()
+                .filter(p -> p.getPartner().getId().equals(partnerId))
+                .findFirst()
+                .orElseThrow(() -> new UserNotInSessionException("You are not in this session!"));
+
+        if (session.getSessionStatus() == SessionStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot leave a cancelled session!");
+        }
+
+        sessionParticipantRepository.delete(participant);
+    }
+
+    @Transactional
+    public void cancelSession(UUID sessionId, UUID hostId) {
+        WorkoutSession session = workoutSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("Session not found!"));
+
+        if (!session.getHost().getId().equals(hostId)) {
+            throw new UnauthorizedActionException("Only the host can cancel this session!");
+        }
+
+        if (session.getSessionStatus() == SessionStatus.CANCELLED) {
+            throw new IllegalStateException("Session is already cancelled!");
+        }
+
+        session.setSessionStatus(SessionStatus.CANCELLED);
+    }
+
+    public WorkoutSessionDto getSessionById(UUID sessionId) {
+        WorkoutSession session = workoutSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("Session not found!"));
+
+        return WorkoutSessionMapper.toDto(session);
+    }
+
+    public List<WorkoutSessionDto> getActiveSessions() {
+        List<WorkoutSession> sessions = workoutSessionRepository.findAllBySessionStatus(SessionStatus.ACTIVE);
+
+        return WorkoutSessionMapper.toDtoList(sessions);
+    }
+
+    public List<WorkoutSessionDto> getSessionsByUser(UUID userId) {
+        return WorkoutSessionMapper.toDtoList(workoutSessionRepository.findAllByUserId(userId));
     }
 }
