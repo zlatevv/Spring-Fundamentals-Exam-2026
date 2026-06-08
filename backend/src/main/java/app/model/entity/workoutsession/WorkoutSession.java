@@ -1,5 +1,6 @@
 package app.model.entity.workoutsession;
 
+import app.model.entity.city.City;
 import app.model.entity.user.SessionParticipant;
 import app.model.entity.user.User;
 import app.model.enums.workoutsession.MuscleGroup;
@@ -33,8 +34,9 @@ public class WorkoutSession {
     @Column(nullable = false)
     private String gymName;
 
-    @Column(nullable = false)
-    private String cityName;
+    @ManyToOne
+    @JoinColumn(name = "city_id", nullable = false)
+    private City city;
 
     @Column(nullable = false)
     private LocalDateTime scheduledAt;
@@ -55,6 +57,7 @@ public class WorkoutSession {
 
     @JsonIgnore
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Builder.Default
     private List<SessionParticipant> participants = new ArrayList<>();
 
     private LocalDateTime createdOn;

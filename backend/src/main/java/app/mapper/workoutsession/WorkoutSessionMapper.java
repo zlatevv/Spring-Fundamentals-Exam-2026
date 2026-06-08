@@ -2,6 +2,7 @@ package app.mapper.workoutsession;
 
 import app.model.dto.workoutsession.CreateSessionRequest;
 import app.model.dto.workoutsession.WorkoutSessionDto;
+import app.model.entity.city.City;
 import app.model.entity.user.User;
 import app.model.entity.workoutsession.WorkoutSession;
 import app.model.enums.workoutsession.SessionStatus;
@@ -12,11 +13,11 @@ import java.util.List;
 
 @Component
 public class WorkoutSessionMapper {
-    public static WorkoutSession toEntity(CreateSessionRequest request, User host) {
+    public static WorkoutSession toEntity(CreateSessionRequest request, User host, City city) {
         return WorkoutSession.builder()
                 .title(request.getTitle())
                 .gymName(request.getGymName())
-                .cityName(request.getCityName())
+                .city(city)
                 .scheduledAt(request.getScheduledAt())
                 .muscleGroup(request.getMuscleGroup())
                 .maxPartners(request.getMaxPartners())
@@ -32,7 +33,7 @@ public class WorkoutSessionMapper {
                 .id(session.getId())
                 .title(session.getTitle())
                 .gymName(session.getGymName())
-                .cityName(session.getCityName())
+                .cityName(session.getCity().getName())
                 .scheduledAt(session.getScheduledAt())
                 .muscleGroup(session.getMuscleGroup())
                 .maxPartners(session.getMaxPartners())

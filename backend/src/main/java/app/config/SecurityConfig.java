@@ -78,11 +78,13 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userService);
+        DaoAuthenticationProvider provider =
+            new DaoAuthenticationProvider(userService);
+
         provider.setPasswordEncoder(passwordEncoder);
+
         return provider;
-    }
+        }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
