@@ -9,10 +9,6 @@ export const MUSCLE_GROUPS = [
   'FULL_BODY'
 ];
 
-export const CITIES = [
-  "Los Angeles", "San Diego", "New York", "Chicago", "Austin", "Miami",
-];
-
 // ── Shared UI Primitives ────────────────────────────────────────────────
 
 export function AvatarCircle({ initials, size = 44, bg = "#1e3a5f", color = "#7eb8f7" }) {

@@ -8,10 +8,12 @@ import app.exception.workoutsession.UserNotInSessionException;
 import app.mapper.workoutsession.WorkoutSessionMapper;
 import app.model.dto.workoutsession.CreateSessionRequest;
 import app.model.dto.workoutsession.WorkoutSessionDto;
+import app.model.entity.city.City;
 import app.model.entity.user.SessionParticipant;
 import app.model.entity.user.User;
 import app.model.entity.workoutsession.WorkoutSession;
 import app.model.enums.workoutsession.SessionStatus;
+import app.repository.city.CityRepository;
 import app.repository.user.SessionParticipantRepository;
 import app.repository.user.UserRepository;
 import app.repository.workoutsession.WorkoutSessionRepository;
@@ -27,20 +29,31 @@ import java.util.UUID;
 public class WorkoutSessionService {
     private final WorkoutSessionRepository workoutSessionRepository;
     private final SessionParticipantRepository sessionParticipantRepository;
+    private final CityRepository cityRepository;
     private final UserRepository userRepository;
 
-    public WorkoutSessionService(WorkoutSessionRepository workoutSessionRepository, SessionParticipantRepository sessionParticipantRepository, UserRepository userRepository) {
+    public WorkoutSessionService(WorkoutSessionRepository workoutSessionRepository, SessionParticipantRepository sessionParticipantRepository, UserRepository userRepository, CityRepository cityRepository) {
         this.workoutSessionRepository = workoutSessionRepository;
         this.sessionParticipantRepository = sessionParticipantRepository;
         this.userRepository = userRepository;
+        this.cityRepository = cityRepository;
     }
 
     @Transactional
-    public void createWorkoutSession(CreateSessionRequest createSessionRequest) {
-        User host = userRepository.findById(createSessionRequest.getHost().getId())
-                .orElseThrow(() -> new UserDoesNotExistException("User doesn't exist"));
+    public void createWorkoutSession(CreateSessionRequest request) {
+        User host = userRepository.findById(request.getHost().getId())
+            .orElseThrow(() -> new UserDoesNotExistException("User doesn't exist"));
 
-        workoutSessionRepository.save(WorkoutSessionMapper.toEntity(createSessionRequest, host));
+        City city = cityRepository.findByName(request.getCityName())
+                .orElseGet(() -> cityRepository.save(
+                        City.builder()
+                                .name(request.getCityName())
+                                .build()
+                ));
+
+        WorkoutSession session = WorkoutSessionMapper.toEntity(request, host, city);
+
+        workoutSessionRepository.save(session);
     }
 
     @Transactional

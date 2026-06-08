@@ -18,5 +18,4 @@ public class CreateSessionRequest {
     private Integer maxPartners;
     private String description;
     private User host;
-
 }

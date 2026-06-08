@@ -77,7 +77,7 @@ public class UserService implements UserDetailsService {
             user.setProfilePictureUrl(request.getProfilePictureUrl());
         }
 
-        if (request.getNewPassword() != null) {
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
             if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
                 throw new PasswordDoesNotMatchException("Current password is incorrect!");
             }

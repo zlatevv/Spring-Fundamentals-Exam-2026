@@ -61,11 +61,29 @@ export default function Profile() {
   const handleEditSubmit = async () => {
     setEditLoading(true);
     setEditErrors({});
+
     try {
-      const res = await axios.put(`/api/auth/${user.id}/edit-profile`, editForm);
+      const payload = {
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
+        profilePictureUrl: editForm.profilePictureUrl,
+      };
+
+      // only include password fields if user actually filled them
+      if (editForm.currentPassword || editForm.newPassword) {
+        payload.currentPassword = editForm.currentPassword;
+        payload.newPassword = editForm.newPassword;
+      }
+
+      const res = await axios.put(
+        `/api/auth/${user.id}/edit-profile`,
+        payload
+      );
+
       setProfile(res.data);
       setEditSuccess(true);
       setTimeout(() => setEditOpen(false), 1200);
+
     } catch (err) {
       const data = err.response?.data;
       if (typeof data === "object") setEditErrors(data);

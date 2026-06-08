@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
-import { AvatarCircle, Tag, StatusBadge, GLOBAL_STYLES, GYM_BG_URL, MUSCLE_GROUPS, CITIES } from "../shared/shared";
+import { AvatarCircle, Tag, StatusBadge, GLOBAL_STYLES, GYM_BG_URL, MUSCLE_GROUPS} from "../shared/shared";
 
 export default function FindSpotter() {
   const { user } = useAuth();
@@ -17,10 +17,15 @@ export default function FindSpotter() {
   const [filterCity,   setFilterCity]   = useState("");
   const [filterMuscle, setFilterMuscle] = useState("");
   const [filterStatus, setFilterStatus] = useState("ACTIVE");
+  const [cities, setCities] = useState([]);
 
   useEffect(() => {
     fetchSessions();
   }, [filterCity, filterMuscle, filterStatus]);
+
+  useEffect(() => {
+    fetchCities();
+  }, []);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -37,6 +42,14 @@ export default function FindSpotter() {
       setError("Could not load sessions. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+  const fetchCities = async () => {
+    try {
+      const res = await axios.get("/api/cities", { withCredentials: true });
+      setCities(res.data);
+    } catch (err) {
+      console.error("Failed to load cities", err);
     }
   };
 
@@ -79,7 +92,11 @@ export default function FindSpotter() {
 
         <select value={filterCity} onChange={e => setFilterCity(e.target.value)} style={selectStyle}>
           <option value="">All Cities</option>
-          {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+          {cities.map(c => (
+            <option key={c.id} value={c.name}>
+              {c.name}
+            </option>
+          ))}
         </select>
 
         <select value={filterMuscle} onChange={e => setFilterMuscle(e.target.value)} style={selectStyle}>
