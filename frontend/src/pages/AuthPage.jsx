@@ -32,13 +32,16 @@ export default function AuthPage() {
         login(res.data);
         navigate("/");
       } else {
-        const res = await axios.post("/api/auth/register", {
+        await axios.post("/api/auth/register", {
           username: formData.username,
           email: formData.email,
           password: formData.password,
         });
-        login(res.data);
-        navigate("/");
+        
+        setFormData({ ...formData, password: "" });
+        
+        setTab("login");
+        alert("Account created successfully! Please log in to start your session.");
       }
     } catch (err) {
       setError(err.response?.data || "Something went wrong. Try again.");
