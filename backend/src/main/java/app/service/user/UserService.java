@@ -51,13 +51,13 @@ public class UserService implements UserDetailsService {
         Optional<User> userToGet = userRepository.findByUsername(loginRequest.getUsername());
 
         if (userToGet.isEmpty()) {
-            throw new UserDoesNotExistException("Invalid username!");
+            throw new UserDoesNotExistException("Invalid username or password");
         }
 
         User loggedUser = userToGet.get();
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), loggedUser.getPassword())) {
-            throw new PasswordDoesNotMatchException("Wrong password!");
+            throw new PasswordDoesNotMatchException("Invalid username or password");
         }
 
         return UserMapper.toUserDto(loggedUser);
