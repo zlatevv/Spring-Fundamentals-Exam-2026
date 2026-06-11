@@ -56,8 +56,8 @@ docker-compose.yml   Docker setup for the full stack
 
 ```env
 DB_NAME=spring_fundamentals_exam
-DB_USER=root
-DB_ROOT_PASSWORD=1234
+DB_USER=[youruser]
+DB_ROOT_PASSWORD=[yourpass]
 ```
 
 2. Start the application:
