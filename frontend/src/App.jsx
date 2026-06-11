@@ -17,12 +17,30 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/auth"         element={<AuthPage />} />
-          <Route path="/"             element={<FindSpotter />} />
-          <Route path="/create"       element={<PrivateRoute><CreateSession /></PrivateRoute>} />
-          <Route path="/profile"      element={<PrivateRoute><Profile /></PrivateRoute>} />
-          <Route path="/session/:id"  element={<SessionDetail />} />
-          <Route path="/session/:id/reviews" element={<SessionReviews />} />
+          {/* Public Route */}
+          <Route path="/auth" element={<AuthPage />} />
+
+          {/* Protected Routes */}
+          <Route 
+            path="/" 
+            element={<PrivateRoute><FindSpotter /></PrivateRoute>} 
+          />
+          <Route 
+            path="/create" 
+            element={<PrivateRoute><CreateSession /></PrivateRoute>} 
+          />
+          <Route 
+            path="/profile" 
+            element={<PrivateRoute><Profile /></PrivateRoute>} 
+          />
+          <Route 
+            path="/session/:id" 
+            element={<PrivateRoute><SessionDetail /></PrivateRoute>} 
+          />
+          <Route 
+            path="/session/:id/reviews" 
+            element={<PrivateRoute><SessionReviews /></PrivateRoute>} 
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
