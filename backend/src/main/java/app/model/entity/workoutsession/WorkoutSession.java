@@ -34,9 +34,10 @@ public class WorkoutSession {
     @Column(nullable = false)
     private String gymName;
 
+    @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "city_id", nullable = false)
-    private City city;
+    @JoinColumn(name = "host_id")
+    private User host;
 
     @Column(nullable = false)
     private LocalDateTime scheduledAt;
@@ -51,9 +52,10 @@ public class WorkoutSession {
     @Enumerated(EnumType.STRING)
     private SessionStatus sessionStatus;
 
+    @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "host_id")
-    private User host;
+    @JoinColumn(name = "city_id", nullable = false)
+    private City city;
 
     @JsonIgnore
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.EAGER)

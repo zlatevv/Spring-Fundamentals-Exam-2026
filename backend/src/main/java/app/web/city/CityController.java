@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import app.model.entity.city.City;
 
 @RestController
-@RequestMapping("/cities")
+@RequestMapping("/api/cities")
 public class CityController {
     private final CityService cityService;
 
