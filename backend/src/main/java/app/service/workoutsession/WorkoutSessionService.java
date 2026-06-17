@@ -2,6 +2,7 @@ package app.service.workoutsession;
 
 import app.exception.user.UserDoesNotExistException;
 import app.exception.workoutsession.AlreadyJoinedException;
+import app.exception.workoutsession.InvalidDateException;
 import app.exception.workoutsession.SessionFullException;
 import app.exception.workoutsession.UnauthorizedActionException;
 import app.exception.workoutsession.UserNotInSessionException;
@@ -12,6 +13,7 @@ import app.model.entity.city.City;
 import app.model.entity.user.SessionParticipant;
 import app.model.entity.user.User;
 import app.model.entity.workoutsession.WorkoutSession;
+import app.model.enums.workoutsession.MuscleGroup;
 import app.model.enums.workoutsession.SessionStatus;
 import app.repository.city.CityRepository;
 import app.repository.user.SessionParticipantRepository;
@@ -19,6 +21,8 @@ import app.repository.user.UserRepository;
 import app.repository.workoutsession.WorkoutSessionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -50,6 +54,10 @@ public class WorkoutSessionService {
                                 .name(request.getCityName())
                                 .build()
                 ));
+
+        if (request.getScheduledAt().isBefore(LocalDateTime.now().minusSeconds(30))) {
+            throw new InvalidDateException("Schedule date cannot be in the past");
+        }
 
         WorkoutSession session = WorkoutSessionMapper.toEntity(request, host, city);
 
@@ -132,12 +140,28 @@ public class WorkoutSessionService {
         return WorkoutSessionMapper.toDto(session);
     }
 
-    public List<WorkoutSessionDto> getActiveSessions() {
-        List<WorkoutSession> sessions = workoutSessionRepository.findAllBySessionStatus(SessionStatus.ACTIVE);
+    public List<WorkoutSessionDto> getSessions(String status, String city, String muscleGroup) {
+        Specification<WorkoutSession> spec;
 
-        return WorkoutSessionMapper.toDtoList(sessions);
+        if (status != null && !status.isBlank()) {
+            SessionStatus s = SessionStatus.valueOf(status);
+            spec = (root, query, cb) -> cb.equal(root.get("sessionStatus"), s);
+        } else {
+            spec = (root, query, cb) -> cb.equal(root.get("sessionStatus"), SessionStatus.ACTIVE);
+        }
+
+        if (city != null && !city.isBlank()) {
+            String c = city;
+            spec = spec.and((root, query, cb) -> cb.equal(root.join("city").get("name"), c));
+        }
+
+        if (muscleGroup != null && !muscleGroup.isBlank()) {
+            MuscleGroup mg = MuscleGroup.valueOf(muscleGroup);
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("muscleGroup"), mg));
+        }
+
+        return WorkoutSessionMapper.toDtoList(workoutSessionRepository.findAll(spec));
     }
-
     public List<WorkoutSessionDto> getSessionsByUser(UUID userId) {
         return WorkoutSessionMapper.toDtoList(workoutSessionRepository.findAllByUserId(userId));
     }

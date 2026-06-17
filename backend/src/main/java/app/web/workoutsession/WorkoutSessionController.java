@@ -53,8 +53,11 @@ public class WorkoutSessionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<WorkoutSessionDto>> getActiveSessions() {
-        return ResponseEntity.ok(workoutSessionService.getActiveSessions());
+    public ResponseEntity<List<WorkoutSessionDto>> getSessions(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String muscleGroup) {
+        return ResponseEntity.ok(workoutSessionService.getSessions(status, city, muscleGroup));
     }
 
     @GetMapping("/user/{userId}")
