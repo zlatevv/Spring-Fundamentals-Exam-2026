@@ -53,6 +53,7 @@ export default function CreateSession() {
     try {
       await axios.post("/api/sessions", {
         ...form,
+        scheduledAt: form.scheduledAt ? form.scheduledAt + ":00" : "",
         maxPartners: Number(form.maxPartners),
         host: { id: user.id },
       }, {
